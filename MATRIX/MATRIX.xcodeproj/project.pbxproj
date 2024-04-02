@@ -24,6 +24,7 @@
 		07029A432A5B52BE0024B2D9 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 07029A422A5B52BE0024B2D9 /* FirebaseDatabase */; };
 		07029A452A5B52E80024B2D9 /* FirebaseFirestoreSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 07029A442A5B52E80024B2D9 /* FirebaseFirestoreSwift */; };
 		07029A472A5B52FA0024B2D9 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 07029A462A5B52FA0024B2D9 /* FirebaseStorage */; };
+		07490E6C2BB22176001C318C /* Database manager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07490E6B2BB22176001C318C /* Database manager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +61,7 @@
 		018A3BD02A54CFCA006E974C /* Connect view.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Connect view.swift"; sourceTree = "<group>"; };
 		07029A3A2A58D1A70024B2D9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../GoogleService-Info.plist"; sourceTree = "<group>"; };
 		07029A3C2A5B52170024B2D9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		07490E6B2BB22176001C318C /* Database manager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Database manager.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +128,7 @@
 				018A3BC82A4B82D9006E974C /* Financial goals.swift */,
 				018A3BCA2A4BCE05006E974C /* budget bot view.swift */,
 				018A3BCE2A4DC9E8006E974C /* data.json */,
+				07490E6B2BB22176001C318C /* Database manager.swift */,
 			);
 			path = MATRIX;
 			sourceTree = "<group>";
@@ -309,6 +312,7 @@
 				018A3BD12A54CFCA006E974C /* Connect view.swift in Sources */,
 				0165434E2A355CEA00736095 /* MATRIXApp.swift in Sources */,
 				018A3BC32A44B11E006E974C /* login in screen.swift in Sources */,
+				07490E6C2BB22176001C318C /* Database manager.swift in Sources */,
 				018A3BC92A4B82D9006E974C /* Financial goals.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
