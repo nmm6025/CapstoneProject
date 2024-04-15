@@ -28,9 +28,8 @@ struct WalletView: View {
         self.cardInfos = [
             ("Budgeting", "creditcard", AnyView(BudgetingView())),
             ("Financial Goals", "chart.bar", AnyView(FinancialGoalsView())),
-            ("Budget Bot", "gearshape.fill", AnyView(BudgetBotView())),
             ("Cut Costs", "scissors", AnyView(CutCostsView())),
-            ("Account", "person.circle", AnyView(AccountView())) // Add AccountView here
+            ("Budget Planning", "dollarsign.circle", AnyView(BudgetPlanningView()))
         ]
     }
     
@@ -96,42 +95,7 @@ struct BudgetingView_Previews: PreviewProvider {
     }
 }
 
-struct CutCostsView: View {
-    var body: some View {
-        Text("Cut Costs View")
-    }
-}
 
-struct AccountView: View {
-    @State private var username: String = ""
-    @State private var password: String = ""
-    @StateObject private var databaseManager = DatabaseManager.shared
-    
-    var body: some View {
-        VStack {
-            TextField("Username", text: $username)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-            
-            SecureField("Password", text: $password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-            
-            Button("Login") {
-                // Perform login action
-                if let user = databaseManager.loginUser(username: username, password: password) {
-                    // Login successful
-                    print("Login successful for user: \(user.username)")
-                } else {
-                    // Login failed
-                    print("Login failed")
-                }
-            }
-            .padding()
-        }
-        .navigationTitle("Account")
-    }
-}
 
 struct CardView: View {
     let text: String

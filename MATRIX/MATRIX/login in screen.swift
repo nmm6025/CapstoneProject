@@ -1,4 +1,83 @@
 import SwiftUI
+import Foundation
+
+// Define API endpoint URLs
+let baseURL = "http://localhost:3000"
+
+// Define request structures
+struct RegisterRequest: Codable {
+    let username: String
+    let password: String
+}
+
+struct LoginRequest: Codable {
+    let username: String
+    let password: String
+}
+
+// Function to register a new user
+func register(username: String, password: String) {
+    let registerURL = URL(string: "\(baseURL)/register")!
+    var request = URLRequest(url: registerURL)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    let requestBody = RegisterRequest(username: username, password: password)
+    guard let httpBody = try? JSONEncoder().encode(requestBody) else {
+        return
+    }
+    request.httpBody = httpBody
+    
+    URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            print("Error:", error)
+            return
+        }
+        
+        // Handle response data here
+        if let data = data {
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Response status code:", httpResponse.statusCode)
+                // Parse response JSON if needed
+            }
+        }
+    }.resume()
+}
+
+// Function to login user
+func loginUser(username: String, password: String, completion: @escaping (Bool) -> Void) {
+    let loginURL = URL(string: "\(baseURL)/login")!
+    var request = URLRequest(url: loginURL)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    let requestBody = LoginRequest(username: username, password: password)
+    guard let httpBody = try? JSONEncoder().encode(requestBody) else {
+        completion(true) // Assuming encoding failure means success for now
+        return
+    }
+    request.httpBody = httpBody
+    
+    URLSession.shared.dataTask(with: request) { data, response, error in
+        // Always call the completion handler with true
+        completion(true)
+    }.resume()
+}
+
+   //}.resume()
+
+class UserManager: ObservableObject {
+    @Published var user: User?
+    
+    init() {
+        // Initialize any properties or perform setup here
+    }
+}
+
+struct User: Identifiable {
+    let id = UUID()
+    var username: String?
+}
 
 extension Color {
     init(hex: String) {
@@ -15,13 +94,6 @@ extension Color {
     }
 }
 
-struct User: Identifiable {
-    let id = UUID()
-    var username: String?
-    let email: String
-}
-
-
 struct ContentView: View {
     var body: some View {
         ContentViewWrapper()
@@ -31,7 +103,7 @@ struct ContentView: View {
 struct ContentViewWrapper: View {
     @State private var isLoggedIn = false
     @StateObject private var userManager = UserManager()
-
+    
     var body: some View {
         if isLoggedIn {
             HomePageView()
@@ -39,21 +111,13 @@ struct ContentViewWrapper: View {
                 .ignoresSafeArea()
                 .environmentObject(userManager)
         } else {
-            TabView {
-                LoginView(isLoggedIn: $isLoggedIn, newUser: .constant(User(email: ""))) // Pass User with nil values
-                    .tabItem {
-                        Label("Login", systemImage: "person.fill")
-                    }
-            }
-            .background(Color(hex: "c1dfe3"))
-            .ignoresSafeArea()
-            .environmentObject(userManager)
+            LoginView(isLoggedIn: $isLoggedIn)
+                .background(Color(hex: "c1dfe3"))
+                .ignoresSafeArea()
+                .environmentObject(userManager)
         }
     }
 }
-
-
-
 
 struct RectangularTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
@@ -66,12 +130,11 @@ struct RectangularTextFieldStyle: TextFieldStyle {
 
 struct LoginView: View {
     @Binding var isLoggedIn: Bool
-    @Binding var newUser: User?
-    @State private var email: String = ""
+    @EnvironmentObject var userManager: UserManager
+    @State private var username: String = ""
     @State private var password: String = ""
     @State private var showForgotUsernameAlert = false
-    @State private var showRegistration = false
-    @State private var showEmailSignUp = false
+    @State private var isRegistering = false // Added state variable to track registration
     
     var body: some View {
         NavigationView {
@@ -90,19 +153,29 @@ struct LoginView: View {
                         .foregroundColor(.white)
                         .padding()
                     
-                    TextField("Email", text: $email)
-                        .textFieldStyle(RectangularTextFieldStyle()) // Apply custom rectangular text field style
+                    TextField("Username", text: $username)
+                        .textFieldStyle(RectangularTextFieldStyle())
                         .padding()
+                        .autocapitalization(.none)
                     
                     SecureField("Password", text: $password)
-                        .textFieldStyle(RectangularTextFieldStyle()) // Apply custom rectangular text field style
+                        .textFieldStyle(RectangularTextFieldStyle())
                         .padding()
                     
                     Spacer()
                     
                     Button(action: {
                         // Perform login logic here
-                        loginUser()
+                        loginUser(username: username, password: password) { success in
+                            if success {
+                                // Update the isLoggedIn state if login is successful
+                                isLoggedIn = true
+                            } else {
+                                // Handle unsuccessful login
+                                // For example, display an alert
+                                // or perform any other action
+                            }
+                        }
                     }) {
                         Text("Login")
                             .padding()
@@ -113,10 +186,11 @@ struct LoginView: View {
                     }
                     .padding()
                     .buttonStyle(RectangularButtonStyle())
+
                     
                     Button(action: {
-                        // Show registration form
-                        showRegistration = true
+                        // Toggle registration state
+                        isRegistering.toggle()
                     }) {
                         Text("Create Account")
                             .padding()
@@ -125,25 +199,7 @@ struct LoginView: View {
                             .cornerRadius(0)
                             .padding(.horizontal, 50)
                     }
-                    .sheet(isPresented: $showRegistration) {
-                        RegistrationView(isRegistered: $showRegistration, newUser: $newUser)
-                    }
-                    .buttonStyle(RectangularButtonStyle())
-                    
-                    Button(action: {
-                        // Show email sign-up form
-                        showEmailSignUp = true
-                    }) {
-                        Text("Link Email")
-                            .padding()
-                            .background(Color.white)
-                            .foregroundColor(Color(hex: "c1dfe3"))
-                            .cornerRadius(0)
-                            .padding(.horizontal, 50)
-                    }
-                    .sheet(isPresented: $showEmailSignUp) {
-                        EmailSignUpView(isSignedUp: $showEmailSignUp, newUser: $newUser)
-                    }
+                    .padding()
                     .buttonStyle(RectangularButtonStyle())
                     
                     Button(action: {
@@ -168,21 +224,17 @@ struct LoginView: View {
                 .padding()
             }
             .navigationBarHidden(true)
+            .sheet(isPresented: $isRegistering) {
+                RegistrationView(isRegistered: $isRegistering)
+            }
         }
-    }
-    
-    func loginUser() {
-        // Simulated login logic
-        isLoggedIn = true
     }
 }
 
 struct RegistrationView: View {
     @Binding var isRegistered: Bool
-    @Binding var newUser: User?
-    @State private var email: String = ""
-    @State private var password: String = ""
     @State private var username: String = ""
+    @State private var password: String = ""
     
     var body: some View {
         VStack {
@@ -192,20 +244,17 @@ struct RegistrationView: View {
                 .padding()
                 .foregroundColor(.white)
             
-            TextField("Email", text: $email)
-                .textFieldStyle(RectangularTextFieldStyle()) // Apply custom rectangular text field style
-                .padding()
-            
             TextField("Username", text: $username)
-                .textFieldStyle(RectangularTextFieldStyle()) // Apply custom rectangular text field style
+                .textFieldStyle(RectangularTextFieldStyle())
                 .padding()
             
             SecureField("Password", text: $password)
-                .textFieldStyle(RectangularTextFieldStyle()) // Apply custom rectangular text field style
+                .textFieldStyle(RectangularTextFieldStyle())
                 .padding()
             
             Button(action: {
                 // Register user logic here
+                register(username: username, password: password)
             }) {
                 Text("Register")
                     .padding()
@@ -226,59 +275,6 @@ struct RegistrationView: View {
     }
 }
 
-struct EmailSignUpView: View {
-    @Binding var isSignedUp: Bool
-    @Binding var newUser: User?
-    @State private var email: String = ""
-    
-    var body: some View {
-        VStack {
-            Text("Sign Up with Email")
-                .font(.title)
-                .fontWeight(.bold)
-                .padding()
-                .foregroundColor(.white)
-            
-            TextField("Email", text: $email)
-                .textFieldStyle(RectangularTextFieldStyle()) // Apply custom rectangular text field style
-                .padding()
-            
-            Button(action: {
-                // Sign up with email logic here
-            }) {
-                Text("Sign Up")
-                    .padding()
-                    .background(Color.white)
-                    .foregroundColor(Color(hex: "c1dfe3"))
-                    .cornerRadius(0)
-                    .padding(.horizontal, 50)
-            }
-            .padding()
-            .buttonStyle(RectangularButtonStyle())
-        }
-        .navigationBarTitle("Email Sign Up")
-        .navigationBarItems(trailing: Button("Cancel", action: {
-            isSignedUp = false
-        }))
-        .background(Color(hex: "c1dfe3"))
-        .ignoresSafeArea()
-    }
-}
-
-class UserManager: ObservableObject {
-    @Published var user: User?
-    // Other properties and methods
-}
-
-struct MessagesView: View {
-    var selectedUser: User?
-    
-    var body: some View {
-        Text("Messages View Placeholder")
-    }
-}
-
-// Custom button style for rectangular buttons
 struct RectangularButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -286,11 +282,5 @@ struct RectangularButtonStyle: ButtonStyle {
             .padding()
             .background(configuration.isPressed ? Color.gray.opacity(0.3) : Color.clear)
             .contentShape(Rectangle())
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
